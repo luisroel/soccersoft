@@ -1,0 +1,66 @@
+Austria - Bundesliga
+Inglaterra - National League
+SCOTLAND: Championship
+Germany - Bundesliga 3
+Italy Lega Pro
+
+
+Bosnia and Herzegovina - Premier League
+Republica Checa: Liga Synot
+Romania - Liga 3
+Russia - Premier League
+Suiza - Super Liga
+Turkia - Super League
+
+South Africa - Premier League
+EGYPT: Premier League
+
+New Zeland - Premiership
+
+Chile - Primera Division
+Chile - Primera B
+Colombia Primera A
+Bolivia - Liga de Futbol Prof
+PANAMA: LPF - Clausura
+
+		0.035	0.28
+20000	700		5600		1/1/2015
+30000	1050	8400		5/15/2015
+40000	1400	11200		6/18/2015
+50000	1750	14000		7/19/2015
+60000	2100	16800		8/27/2015
+70000	2450	19600		9/27/2015
+80000	2800	22400		10/5/2015
+90000	3150	25200		11/1/2015
+100000	3500	28000		11/22/2015
+110000	3850	30800
+120000	4200	33600
+130000	4550	36400
+140000	4900	39200
+150000	5250	42000
+160000	5600	44800
+170000	5950	47600
+180000	6300	50400
+190000	6650	53200
+200000	7000	56000
+210000	7350	58800
+220000	7700	61600
+230000	8050	64400
+240000	8400	67200
+
+
+Home Wins
+Predictions
+60Wins
+3.0Wins
+
+Promedio de Local
+Promedio de Empates
+Promedio de Visitas
+
+CALL spStats_Get_HomeWinsPts_t('2014-8-1','2016-3-2');
+call spStats_Get_PredictionWinsPts_t('2015-12-31','2016-2-25');
+CALL spStats_Get_Home60WinsPts_t('2015-1-1','2016-2-29');
+SELECT * FROM vwStats_Get_Home60Wins_t WHERE Time between '2016-2-28' AND'2016-2-29' and Type = 'Bet' order by Time, home;
+
+

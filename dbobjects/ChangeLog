@@ -1,0 +1,13 @@
+Make Phases in season dynamic
+
+1. Create table to store the relation between tbCore_Season and Phases in a given Season.
+2. Populate the new schema with the current information
+3. Season Types are not required so it can remove.
+	* Catalogs > Season Types can be eliminated
+4. Options that require be updated are:
+	* Catalogs > Tournaments
+	* Import > Fixtures
+	* Import > Data
+	
+	
+

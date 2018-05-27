@@ -1,0 +1,23 @@
+DROP TABLE IF EXISTS tbCore_Team;
+CREATE TABLE tbCore_Team(
+	`TeamId`		BIGINT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+	`ShortName`		VARCHAR(50) NULL,
+	`Name`			VARCHAR(255) NULL,
+	`IsActive`		INT NULL,
+	`AssociationId`	BIGINT NULL,
+	`Alias01`		VARCHAR(50) NULL,
+	`Alias02`		VARCHAR(50) NULL,
+	`Alias03`		VARCHAR(50) NULL,
+	`Alias04`		VARCHAR(50) NULL,
+	`Alias05`		VARCHAR(50) NULL,
+	`Alias06`		VARCHAR(50) NULL,
+	`Alias07`		VARCHAR(50) NULL,
+	`Alias08`		VARCHAR(50) NULL,
+	`Alias09`		VARCHAR(50) NULL,
+	`Alias10`		VARCHAR(50) NULL,
+	`EntryUserId`	BIGINT NULL,
+	`EntryDate`		DATETIME NULL,
+	`ModUserId`		BIGINT NULL,
+	`ModDate`		DATETIME NULL
+);
+

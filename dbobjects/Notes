@@ -1,0 +1,576 @@
+Ideas:
+1. Create a batch job for update weekno automatically.
+
+
+Procces update so far:
+ 1. Daily Update Schedule from soccer24.com
+ 2. update weekno batch job.
+ 3. Run stats batch job manually.
+ 
+
+===========================================================================================================
+
+1  GRP01
+2  GRP02
+3  GRP03 
+33 PL032
+34 PL016
+35 PL008
+36 QTERS
+37 SEMIS
+38 THIRD
+39 RELEG
+40 FINAL
+
+----------------------------------------------------------------------------------------------------------- 
+-- FrmFixtures form
+-----------------------------------------------------------------------------------------------------------
+
+--
+-- Get a list of associations filtered by the given IsActive_p value.
+--	IsActive = 2 : No filter to association is applied
+--  Otherwise	 : Get only information about associations that IsActive value
+--
+> spCore_Get_AssociationList (IsActive_p) {	AssociationId, ShortName, Name, IsActive, ConfederationId
+											, ConfederationName, CountryId, CountryName, EntryDate
+											, EntryUserId, EntryUser, ModDate, ModUserId, ModUser}
+	> tbCore_Association
+	> tbCore_Confederation
+	> tbCore_Country
+	> tbSecurity_User
+
+--
+-- Get a list of tournaments that belongs to the association given and the tournament is active
+--
+> spCore_Get_TournamentListByAssociation(AssociationId_p) {TournamentId, ShortName, Name, IsActive, AssociationId
+															, Association, EntryDate, EntryUserId, EntryUser
+															, ModDate, ModUserId, ModUser}
+	> tbCore_Tournament
+	> tbCore_Association
+	> tbSecurity_User
+
+--
+-- Get a list of season regarding a given Tournament.
+--
+> spCore_Get_SeasonList(TournamentId_p) {SeasonId, ShortName, Name, SeasonTypeId, SeasonTypeName, TournamentId, TournamentName}
+	> tbCore_Season
+	> tbCore_SeasonType
+	> tbCore_Tournament
+
+--
+-- Get a list of team registeres in a given season
+--
+> spCore_Get_TeamListBySeason(SeasonId_p) {
+		  TeamId, Name, ShortName, IsActive, AssociationId, AssociationName, Alias01, Alias02, Alias03, Alias04, Alias05
+		, Alias06, Alias07, Alias08, Alias09, Alias10, EntryDate, EntryUserId, EntryUser, ModDate, ModUserId, ModUser}
+	> tbCore_Team
+	> tbCore_Association
+	> tbCore_SeasonTeam
+	> tbSecurity_User
+
+--
+-- Get the phases of a given season
+--
+> spCore_Get_PhaseListBySeason(SeasonId_p) {PhaseId, Name, ShortName, IsActive, EntryDate, EntryUserId, EntryUser, ModDate, ModUserId, ModUser}
+	> tbCore_Season
+	> tbcore_SeasonTypePhase
+	> tbCore_Phase
+	> tbcore_SeasonType
+	> tbSecurity_User
+
+--
+-- Get a list of features of a given season and phase
+--
+> spCore_Get_FixtureList (SeasonId_p, PhaseId_p, Round_p)
+	> tbCore_Fixture
+	> tbCore_Season
+	> tbCore_Phase
+	> tbCore_Team
+	> tbCore_Stadium
+	> tbCore_Referee
+	> tbCore_FixtureStatus
+	> tbSecurity_User
+--
+-- New/Save Button
+--
+> spCore_Insert_Fixture(
+	  IN SeasonId_p			BIGINT
+	, IN PhaseId_p			BIGINT
+	, IN Round_p			BIGINT
+    , IN Time_p				DATETIME
+    , IN HomeTeamId_p		BIGINT
+    , IN ScoredHome_p		INTEGER
+    , IN VisitorTeamId_p	BIGINT
+    , IN ScoredVisitor_p	INTEGER
+    , IN StadiumId_p		BIGINT
+    , IN RefereeId_p		BIGINT
+    , IN StatusId_p			BIGINT
+    , IN Odd_1_p			FLOAT
+    , IN Odd_X_p			FLOAT
+    , IN Odd_2_p			FLOAT
+    , IN WeekNo_p			INT
+    , IN UserId_p			BIGINT
+	, OUT Msg_p				VARCHAR(255)
+)
+	> tbCore_Fixture
+	> fnUtil_Get_Last5
+
+--
+-- Edit/Save button
+-- Validate if the fixtureid exists or if already exists one record based on seasonid, phaseid, round, hometeamid, visitorteamid
+> spCore_Update_Fixture(
+      IN FixtureId_p		BIGINT
+	, IN SeasonId_p			BIGINT
+	, IN PhaseId_p			BIGINT
+	, IN Round_p			BIGINT
+    , IN Time_p				DATETIME
+    , IN HomeTeamId_p		BIGINT
+    , IN ScoredHome_p		INTEGER
+    , IN VisitorTeamId_p	BIGINT
+    , IN ScoredVisitor_p	INTEGER
+    , IN StadiumId_p		BIGINT
+    , IN RefereeId_p		BIGINT
+    , IN StatusId_p			BIGINT
+    , IN Odd_1_p			FLOAT
+    , IN Odd_X_p			FLOAT
+    , IN Odd_2_p			FLOAT
+    , IN WeekNo_p			INT
+    , IN UserId_p			BIGINT
+	, OUT Msg_p				VARCHAR(255)
+)
+	> tbCore_Fixture
+
+--
+-- Delete button
+-- delete a fixture with the fixtureid
+> spCore_Delete_Fixture(
+      IN FixtureId_p BIGINT
+	, OUT Msg_p		 VARCHAR(255)
+	)
+	> tbCore_Fixture
+
+--
+-- Get Overall Live Standing for a given SeasonId and PhaseId
+--
+> spStats_Get_OverallLiveStanding (
+    IN SeasonId_p BIGINT
+	) {*}
+	> vwStats_Get_OverallLiveStanding(SeasonId, PhaseId, Season, Team, Ply, Win, Drw, Lss, Gls, Agn, Dif, Pts)
+		> tbCore_SeasonTeam
+		> tbCore_Season
+		> tbCore_Team
+		> vwStats_Get_Indicators(SeasonId, PhaseId, WeekNo, TeamId, HPl, HWn, HDr, HLs, HGl, HAg, HDf, HPt, VPl, VWn, VDr, VLs, VGl, VAg, VDf, VPt)
+			> vwStats_Get_HomeIndicators(SeasonId, PhaseId, WeekNo, TeamId, Played, Wins, Draws, Losses, Success, Fail, Scored, Against, Diff)
+				> tbCore_Fixture
+			> vwStats_Get_VisitIndicators(SeasonId, PhaseId, WeekNo, TeamId, Played, Wins, Draws, Losses, Success, Fail, Scored, Against, Diff)
+				> tbCore_Fixture
+	> fnUtil_Get_Last5ONormal(TeamId_P, Date_p)
+
+--
+-- Get Home Live Standing for a given SeasonId and PhaseId
+--
+> spStats_Get_HomeLiveStanding (
+    IN SeasonId_p BIGINT
+	) {*}
+	> vwStats_Get_HomelLiveStanding(SeasonId, PhaseId, Season, Team, Ply, Win, Drw, Lss, Gls, Agn, Dif, Pts)
+		> tbCore_SeasonTeam
+		> tbCore_Season
+		> tbCore_Team
+		> vwStats_Get_HomeIndicators(SeasonId, PhaseId, WeekNo, TeamId, Played, Wins, Draws, Losses, Success, Fail, Scored, Against, Diff)
+			> tbCore_Fixture
+	> fnUtil_Get_Last5HNormal(TeamId_P, Date_p)
+
+--
+-- Get Away Live Standing for a given SeasonId and PhaseId
+--
+> spStats_Get_AwayLiveStanding (
+    IN SeasonId_p BIGINT
+	) {*}
+	> vwStats_Get_AwaylLiveStanding{SeasonId, PhaseId, Season, Team, Ply, Win, Drw, Lss, Gls, Agn, Dif, Pts}
+		> tbCore_SeasonTeam
+		> tbCore_Season
+		> tbCore_Team
+		> vwStats_Get_AwayIndicators{SeasonId, PhaseId, WeekNo, TeamId, Played, Wins, Draws, Losses, Success, Fail, Scored, Against, Diff}
+			> tbCore_Fixture
+	> fnUtil_Get_Last5ANormal(TeamId_P, Date_p)
+	
+--------------------------------------------   E N D   ---------------------------------------------------- 
+
+
+----------------------------------------------------------------------------------------------------------- 
+-- FrmRawData form
+-----------------------------------------------------------------------------------------------------------
+
+--
+-- Get the list of associations that has a scheduled match in the given dates
+--
+> spCore_Get_AssociationListByDate(
+	  IN From_p	DATETIME
+    , IN To_p	DATETIME
+) {AssociationId, Association}
+	> vwCore_Get_FixtureListByDate {
+	  AssociationId, Association, TournamentId, Tournament, FixtureId, SeasonId, Season, PhaseId, Phase
+	, Round, Time, HomeTeamId, Home, ScoredHome, VisitorTeamId, Visitor, ScoredVisitor, StadiumId, Stadium
+	, RefereeId, Referee, FixtureStatusId, Status, Odd_1, Odd_X, Odd_2, WeekNo, EntryDate, EntryUserId
+	, EntryUser, ModDate, ModUserId, ModUser}
+		> tbCore_Fixture
+		> tbCore_Season
+		> tbCore_Phase
+		> tbCore_Team
+		> tbCore_Tournament
+		> tbCore_Association
+		> tbCore_Stadium
+		> tbCore_Referee
+		> tbCore_FixtureStatus
+		> tbSecurity_User
+
+--
+--  Get the list of tournaments that has a scheduled match in the given dates and association.
+--
+> spCore_Get_TournamentListByDate(
+	  IN From_p				DATETIME
+    , IN To_p				DATETIME
+    , IN AssociationId_p 	BIGINT
+) {TournamentId, Tournament}
+	> vwCore_Get_FixtureListByDate {	AssociationId, Association, TournamentId, Tournament, FixtureId, SeasonId, Season, PhaseId, Phase
+										, Round, Time, HomeTeamId, Home, ScoredHome, VisitorTeamId, Visitor, ScoredVisitor, StadiumId, Stadium
+										, RefereeId, Referee, FixtureStatusId, Status, Odd_1, Odd_X, Odd_2, WeekNo, EntryDate, EntryUserId
+										, EntryUser, ModDate, ModUserId, ModUser}
+		> tbCore_Fixture
+		> tbCore_Season
+		> tbCore_Phase
+		> tbCore_Team
+		> tbCore_Tournament
+		> tbCore_Association
+		> tbCore_Stadium
+		> tbCore_Referee
+		> tbCore_FixtureStatus
+		> tbSecurity_User
+
+--
+--
+--
+> spStats_Get_RawDataList(
+      IN From_p 			DATETIME
+    , IN To_p				DATETIME
+    , IN AssociationId_p 	BIGINT
+    , IN TournamentId_p		BIGINT
+) {NO, *, LH, LV}
+	> vwStats_Get_RawDataList {	AssociationId, CT, TournamentId, LG, DT, HomeTeamId, HM, VisitorTeamId, VS
+								, SH, SV, RSL, ST, O1, OX, O2, VAL,	GSH, GAH, PTH, LH, GSV, GAV, PTV, LV, DPT
+								, DFT, DFS, DFA, DFH, DFV, DGS, DGA, GPR, TD}
+		> tbCore_Fixture
+		> tbCore_Team
+		> tbCore_FixtureStatus
+		> tbCore_Season
+		> tbCore_Tournament
+		> tbCore_Association
+
+--------------------------------------------   E N D   ---------------------------------------------------- 
+
+--
+-- Week procesing information
+--
+> spStats_Create_WeeklyData(SeasonId_p, From_p, To_p)
+	> spStats_Get_VisitTable_w(SeasonId_p, WeekNo_v)
+    > spStats_Get_HomeTable_w(SeasonId_p, WeekNo_v)
+    > spStats_Get_OverallTable_w(SeasonId_p, WeekNo_v)
+	> spStats_Get_PoissonAnalysis_w(SeasonId_p, WeekNo_v)
+	> spStats_Get_PoissonAnalysis_t(SeasonId_p, WeekNo_v)
+	> spStats_Get_PoissonAnalysisPts_t(SeasonId_p, WeekNo_v)
+--
+-- Final standing home table for a given week no.
+--
+	> spStats_Get_HomeTable_w(SeasonId_p, WeekNo_v)
+		> tbStats_HomeTable
+		> tbCore_SeasonTeam
+		> tbCore_Season
+		> tbCore_Team
+		> vwStats_Get_HomeIndicators(SeasonId, PhaseId, WeekNo, TeamId, Played, Wins, Draws, Losses, Success, Fail, Scored, Against, Diff)
+			> tbCore_Fixture
+--
+-- Final standing visit table for a given week no.
+--
+> spStats_Get_VisitTable_w(SeasonId_p, WeekNo_v)
+	> tbStats_VisitTable
+	> tbCore_SeasonTeam
+	> tbCore_Season
+	> tbCore_Team
+	> vwStats_Get_VisitIndicators(SeasonId, PhaseId, WeekNo, TeamId, Played, Wins, Draws, Losses, Success, Fail, Scored, Against, Diff)
+		> tbCore_Fixture
+
+--
+-- Overall standing table for a given week no.
+--
+> spStats_Get_OverallTable_w(SeasonId_p, WeekNo_v)
+	> tbStats_OverallTable
+	> tbCore_SeasonTeam
+	> tbCore_Season
+	> tbCore_Team
+	> vwStats_Get_Indicators(SeasonId, PhaseId, WeekNo, TeamId, HPl, HWn, HDr, HLs, HGl, HAg, HDf, HPt, VPl, VWn, VDr, VLs, VGl, VAg, VDf, VPt)
+		> vwStats_Get_HomeIndicators
+		> vwStats_Get_VisitIndicators
+
+--
+--  All games Poisson analysis (Goals)
+--
+> spStats_Get_PoissonAnalysis_w(SeasonId_p, WeekNo_v)
+	> tbStats_PoissonAnalysis
+	> tbCore_Fixture
+	> vwStats_Get_HomeIndicators
+		> tbCore_Fixture
+	> vwStats_Get_VisitIndicators
+		> tbCore_Fixture	
+
+--
+--  Previous Seven Games Poisson Analysis (Goals)
+--
+> spStats_Get_PoissonAnalysis_t(SeasonId_p, WeekNo_v)
+	> tbCore_Fixture
+	> tbCore_FixtureTmp
+	> tbStats_PoissonAnalysis_t
+	> vwStats_Get_PoissonProb_t(*, POH_0, POH_1, POH_2, POH_3, POH_4, POH_5, POH_6, POV_0, POV_1, POV_2, POV_3, POV_4, POV_5, POV_6)
+		> fnUtil_Get_PoissonProb
+		> vwStats_Get_Outcomes_t (*, OH, OV)
+			> vwStats_Get_StrengthParms_t(SeasonId, WeekNo, FixtureId, THAGS, TVAGC, TVAGS, THAGC, THAS, TVDS, TVAS, THDS, SASH, SASV)
+				> tbCore_Fixture
+				> vwStats_Get_AGSHT_t(SeasonId, TeamId, Played, Scored, avgScored)
+					> vwStats_Get_HomeIndicators_t(SeasonId, PhaseId, WeekNo, TeamId, Played, Wins, Draws, Losses, Earned_Pts, Lost_Pts, Scored, Against, Diff)
+						> tbCore_FixtureTmp
+				> vwStats_Get_AGSVT_t(SeasonId, TeamId, Played, Scored, avgScored)
+					> vwStats_Get_VisitIndicators_t(SeasonId, PhaseId, WeekNo, TeamId, Played, Wins, Draws, Losses, Earned_Pts, Lost_Pts, Scored, Against, Diff)
+						> tbCore_FixtureTmp
+				> vwStats_Get_AGCHT_t(SeasonId, TeamId, Played, Against, avgAgainst)
+					> vwStats_Get_HomeIndicators_t
+						> tbCore_FixtureTmp
+				> vwStats_Get_AGCVT_t(SeasonId, TeamId, Played, Against, avgAgainst)
+					> vwStats_Get_VisitIndicators_t
+						> tbCore_FixtureTmp
+				> vwStats_Get_SAGSAH_t(SeasonId, Played, Scored, avgScored)
+					> vwStats_Get_HomeIndicators_t
+						> tbCore_FixtureTmp
+				> vwStats_Get_SAGSBV_t(SeasonId, Played, Scored, avgScored)
+					> vwStats_Get_VisitIndicators_t
+						> tbCore_FixtureTmp
+--
+--  Previous Seven Games Poisson Analysis (Puntos)
+--
+> spStats_Get_PoissonAnalysisPts_t (SeasonId_p, WeekNo_p)
+	> tbCore_Fixture
+	> tbCore_FixtureTmp
+	> tbStats_PoissonAnalysisPts_t
+	> vwStats_Get_PoissonProbPts_t( *, POH_0, POH_1, POH_2, POH_3, POH_4, POH_5, POH_6, POV_0, POV_1, POV_2, POV_3, POV_4, POV_5, POV_6)
+		> vwStats_Get_OutcomesPts_t( *, OH, OV)
+			> vwStats_Get_StrengthParmsPts_t(SeasonId, WeekNo, FixtureId, THAGS, TVAGC, TVAGS, THAGC, THAS, TVDS, TVAS, THDS, SASH, SASV)
+				> tbCore_Fixture
+				> vwStats_Get_APEHT_t(SeasonId, TeamId, Played, Earned_Pts, Avg_Earned_Pts)
+					> vwStats_Get_HomeIndicators_t()
+						> tbCore_FixtureTmp
+				> vwStats_Get_APEVT_t(SeasonId, TeamId, Played, Earned_Pts, Avg_Earned_Pts)
+					> vwStats_Get_VisitIndicators_t
+						> tbCore_FixtureTmp
+				> vwStats_Get_APLHT_t(SeasonId, TeamId, Played, Lost_Pts, Avg_Lost_Pts)
+					> vwStats_Get_HomeIndicators_t
+						> tbCore_FixtureTmp
+				> vwStats_Get_APLVT_t(SeasonId, TeamId, Played, Lost_Pts, Avg_Lost_Pts)
+					> vwStats_Get_VisitIndicators_t
+						> tbCore_FixtureTmp
+				> vwStats_Get_SAPEAH_t(SeasonId, Played, Earned_Pts, Avg_Earned_Pts)
+					> vwStats_Get_HomeIndicators_t
+						> tbCore_FixtureTmp
+				> vwStats_Get_SAPEBV_t(SeasonId, Played, Earned_Pts, Avg_Earned_Pts)
+					> vwStats_Get_VisitIndicators_t
+						> tbCore_FixtureTmp
+						
+--
+-- Get general stats for Home Selection to win 
+--
+> spStats_Get_HomeDrawStats
+	vwStats_Get_HomeDrawStats
+		vwStats_Get_HomeDrawRaw
+
+--
+--
+--
+> spStats_Get_HomeDrawProb
+	vwStats_Get_HomeDrawProb
+		vwStats_Get_HomeDrawRaw
+--
+--
+--
+> spStats_Get_HomeDrawStength
+	vwStats_Get_HomeDrawStength
+		vwStats_Get_HomeDrawRaw
+	
+--
+--
+--
+> spStats_Get_HomeDrawSimulation
+	vwStats_Get_HomeDrawSimulation
+		vwStats_Get_HomeDrawRaw
+
+--
+-- Picks home wins selection for analysis betting profit rate
+--
+> spStats_Get_HomeWins_t(From_p, To_p)
+	> vwStats_Get_HomeWins_t( *, FC, Odd, Ok)
+		> vwStats_Get_Simulation_t( *, Date, Type)
+			> vwStats_Get_RawData_tt(*, Association, Tournament, Time, Home, Visit, Diff, SH, SV, Last5_H, Last5_V, SFC, DFC, Rsl, SOdd, DOdd)
+				> tbStats_PoissonAnalysis_t
+				> tbCore_Fixture
+				> tbCore_Team
+				> tbCore_Season
+				> tbCore_Tournament
+				> tbCore_Association
+--
+-- Picks all matches for analysis and profit rate
+--
+> spStats_Get_PredictionWins_t (From_p, To_p)
+	> vwStats_Get_PredictionWins_t( *, FC, Odd, Ok)
+		> vwStats_Get_Simulation_t *
+
+--
+-- Picks home wins seleccion for analysis and profit rate
+--
+> spStats_Get_HomeAndDrawWins_t(From_p, To_p) ( *, FC, Odd, Ok)
+	> vwStats_Get_RawData_tt *
+
+--
+-- Picks home wins seleccion for analysis and profit rate
+--
+> spStats_Get_DoublePredictionWins_t(From_p, To_p) ( *, FC, Odd, Ok)
+	> vwStats_Get_RawData_tt *
+
+--
+--
+--
+> spStats_Get_PredictionWinsPts_t
+	> vwStats_Get_RawDataPts_tt *
+	> vwStats_Get_PredictionWins_t
+		> vwStats_Get_Simulation_t
+			> > vwStats_Get_RawData_tt
+
+--
+--
+--
+> spStats_Get_RawData_t (From_p, To_p)
+	> vwStats_Get_RawData
+		> tbStats_PoissonAnalysis_t
+		> tbCore_Fixture
+		> tbCore_Team
+		> tbCore_Season
+		> tbCore_Tournament
+		> tbCore_Association
+
+--
+-- 
+--
+> spStats_Get_RawData_w (From_p, To_p)
+	> vwStats_Get_RawData
+		> tbStats_PoissonAnalysis
+		> tbCore_Fixture
+		> tbCore_Team
+		> tbCore_Season
+		> tbCore_Tournament
+		> tbCore_Association						
+
+--
+-- 
+--
+> spStats_Get_HomeWinsPts_t  (SeasonId_p, WeekNo_p)
+	> vwStats_Get_RawDataPts_tt
+		> tbStats_PoissonAnalysisPts_t
+		> tbCore_Fixture
+		> tbCore_Team
+		> tbCore_Season
+		> tbCore_Tournament
+		> tbCore_Association
+	> vwStats_Get_HomeWins_t
+		> vwStats_Get_Simulation_t
+			> vwStats_Get_RawData_tt
+
+--
+-- 
+--
+> spStats_Get_Home60WinsPts_t
+	> vwStats_Get_RawDataPts_tt *
+	> vwStats_Get_Home60Wins_t
+		> vwStats_Get_Simulation_t
+			> > vwStats_Get_RawData_tt
+
+--
+-- Sections and field definitions for simulation
+--
+Fixture Summary
+	> Season Id
+	> FixtureId
+	> Week
+	> Association
+	> Tournament
+	> Time
+	> Home
+	> Visit
+	> Odd_1
+	> Odd_X
+	> Odd_2
+	> Last5
+	> OH
+	> OV
+	> Diff
+	> Max_OH
+	> Max_OV
+	> SH
+	> SV
+	> FC
+	> Rsl
+	> Odd
+	> Ok
+
+Probabilities
+	> Tournament
+	> Time
+	> Home
+	> Visit
+	> Pb_Home
+	> Pb_Draw
+	> Pb_Visit
+	> Max_POH
+	> Max_POV
+	> POH_0
+	> POH_1
+	> POH_2
+	> POH_3
+	> POH_4
+	> POH_5
+	> POH_6
+	> POV_0
+	> POV_1
+	> POV_2
+	> POV_3
+	> POV_4
+	> POV_5
+	> POV_6
+
+Strenghs
+	> Tournament
+	> Time
+	> Home
+	> Visit
+	> THAGS
+	> TVAGC
+	> TVAGS
+	> THAGC
+	> THAS
+	> TVDS
+	> TVAS
+	> THDS
+	> SASH
+	> SASV
+	
+Simulation
+	> Tournament
+	> Time
+	> Home
+	> Visit
+
+	

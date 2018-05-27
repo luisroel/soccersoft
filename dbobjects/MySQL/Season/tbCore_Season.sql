@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS tbCore_Season;
+CREATE TABLE tbCore_Season(
+	`SeasonId`		BIGINT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+	`SeasonTypeId`	BIGINT NULL,
+	`ShortName`		VARCHAR(50) NULL,
+	`Name`			VARCHAR(255) NULL,
+	`TournamentId`	BIGINT NULL
+);
